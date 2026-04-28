@@ -7,8 +7,8 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: chitti_apps
     volumes:
-      - ./Milan-db/milan-ddl.sql:/docker-entrypoint-initdb.d/01-ddl.sql
-      - ./Milan-db/milan-dml.sql:/docker-entrypoint-initdb.d/02-dml.sql
+      - ./milan-db/milan-ddl.sql:/docker-entrypoint-initdb.d/01-ddl.sql
+      - ./milan-db/milan-dml.sql:/docker-entrypoint-initdb.d/02-dml.sql
       - pgdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d chitti_apps"]
@@ -28,9 +28,9 @@ services:
 
   fe:
     build:
-      context: ./milan-fe/Milan-fe
+      context: ./milan-fe
       args:
-        VITE_API_URL: http://localhost:5001/milan-aegis
+        VITE_API_URL: http://134.33.132.134/milan-aegis
     ports:
       - "5000:5000"
     depends_on:

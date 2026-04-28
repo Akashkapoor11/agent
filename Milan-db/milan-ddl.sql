@@ -3,10 +3,14 @@
 
 -- \c ai_log_intelligence;
 
+CREATE SCHEMA IF NOT EXISTS milan;
+
+SET search_path TO milan;
+
 -------------------------------------
 -- 1. USERS / RBAC
 -------------------------------------
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE IF NOT EXISTS milan.users (
  user_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
  username VARCHAR(100) UNIQUE,
  email VARCHAR(150),
@@ -17,7 +21,7 @@ CREATE TABLE IF NOT EXISTS users (
 -------------------------------------
 -- 2. LOG SOURCES
 -------------------------------------
-CREATE TABLE IF NOT EXISTS log_sources (
+CREATE TABLE IF NOT EXISTS milan.log_sources (
  source_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
  source_name VARCHAR(100), -- Azure
  source_type VARCHAR(50),
@@ -30,23 +34,23 @@ CREATE TABLE IF NOT EXISTS log_sources (
 -------------------------------------
 -- 3. RAW LOGS (JSON STORAGE)
 -------------------------------------
-CREATE TABLE IF NOT EXISTS raw_logs (
+CREATE TABLE IF NOT EXISTS milan.raw_logs (
  log_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
- source_id UUID REFERENCES log_sources(source_id),
+ source_id UUID REFERENCES milan.log_sources(source_id),
  raw_event JSONB,
  received_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
  hash_signature TEXT,
  is_duplicate BOOLEAN DEFAULT FALSE
 );
 
-CREATE INDEX IF NOT EXISTS idx_raw_json ON raw_logs USING GIN(raw_event);
+CREATE INDEX IF NOT EXISTS idx_raw_json ON milan.raw_logs USING GIN(raw_event);
 
 -------------------------------------
 -- 4. NORMALIZED LOG EVENTS
 -------------------------------------
-CREATE TABLE IF NOT EXISTS normalized_events (
+CREATE TABLE IF NOT EXISTS milan.normalized_events (
  event_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
- log_id UUID REFERENCES raw_logs(log_id),
+ log_id UUID REFERENCES milan.raw_logs(log_id),
 
  user_email VARCHAR(150),
  ip_address INET,
@@ -65,12 +69,12 @@ CREATE TABLE IF NOT EXISTS normalized_events (
 );
 
 CREATE INDEX IF NOT EXISTS idx_event_json
-ON normalized_events USING GIN(normalized_json);
+ON milan.normalized_events USING GIN(normalized_json);
 
 -------------------------------------
 -- 5. CORRELATED SECURITY EVENTS
 -------------------------------------
-CREATE TABLE IF NOT EXISTS correlated_events (
+CREATE TABLE IF NOT EXISTS milan.correlated_events (
  correlation_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
  session_identifier VARCHAR(100),
  linked_events JSONB,
@@ -81,10 +85,10 @@ CREATE TABLE IF NOT EXISTS correlated_events (
 -------------------------------------
 -- 6. ANOMALY ALERTS
 -------------------------------------
-CREATE TABLE IF NOT EXISTS anomaly_alerts (
+CREATE TABLE IF NOT EXISTS milan.anomaly_alerts (
  alert_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
- event_id UUID REFERENCES normalized_events(event_id),
+ event_id UUID REFERENCES milan.normalized_events(event_id),
 
  severity VARCHAR(30),
  risk_percent NUMERIC(5,2),
@@ -92,7 +96,7 @@ CREATE TABLE IF NOT EXISTS anomaly_alerts (
  anomaly_reason TEXT,
 
  alert_status VARCHAR(30) DEFAULT 'OPEN',
- assigned_to UUID REFERENCES users(user_id),
+ assigned_to UUID REFERENCES milan.users(user_id),
 
  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -100,7 +104,7 @@ CREATE TABLE IF NOT EXISTS anomaly_alerts (
 -------------------------------------
 -- 7. AUDIT TRAIL
 -------------------------------------
-CREATE TABLE IF NOT EXISTS audit_logs (
+CREATE TABLE IF NOT EXISTS milan.audit_logs (
  audit_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
  action_type VARCHAR(100),
  actor VARCHAR(100),
@@ -111,9 +115,9 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 -------------------------------------
 -- 8. PIPELINE HEALTH MONITOR
 -------------------------------------
-CREATE TABLE IF NOT EXISTS ingestion_pipeline_monitor (
+CREATE TABLE IF NOT EXISTS milan.ingestion_pipeline_monitor (
  pipeline_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
- source_id UUID REFERENCES log_sources(source_id),
+ source_id UUID REFERENCES milan.log_sources(source_id),
  ingestion_status VARCHAR(50),
  records_processed INTEGER,
  error_count INTEGER,
@@ -123,9 +127,9 @@ CREATE TABLE IF NOT EXISTS ingestion_pipeline_monitor (
 -------------------------------------
 -- 9. RETENTION MANAGEMENT
 -------------------------------------
-CREATE TABLE IF NOT EXISTS retention_queue (
+CREATE TABLE IF NOT EXISTS milan.retention_queue (
  retention_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
- log_id UUID REFERENCES raw_logs(log_id),
+ log_id UUID REFERENCES milan.raw_logs(log_id),
  expiry_date TIMESTAMP,
  deletion_approved BOOLEAN DEFAULT FALSE
 );

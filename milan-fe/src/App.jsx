@@ -28,19 +28,19 @@ export default function App() {
 
   useEffect(() => {
     const apiUrl = import.meta.env.VITE_API_URL || '';
+    const safeFetch = (url, fallback) =>
+      fetch(url).then(res => { if (!res.ok) throw new Error(res.status); return res.json(); }).catch(err => { console.error(`Fetch failed: ${url}`, err); return fallback; });
+
     Promise.all([
-      fetch(`${apiUrl}/api/alerts`).then(res => res.json()),
-      fetch(`${apiUrl}/api/logs/normalized`).then(res => res.json()),
-      fetch(`${apiUrl}/api/stats`).then(res => res.json()),
-      fetch(`${apiUrl}/api/audit`).then(res => res.json())
+      safeFetch(`${apiUrl}/api/alerts`, []),
+      safeFetch(`${apiUrl}/api/logs/normalized`, []),
+      safeFetch(`${apiUrl}/api/stats`, { totalEvents: 0, cleanedRecords: 0, duplicatesRemoved: 0, anomaliesDetected: 0 }),
+      safeFetch(`${apiUrl}/api/audit`, [])
     ]).then(([alertsData, logsData, statsData, auditData]) => {
       setAlerts(alertsData || [])
       setAnalyzedLogs(logsData || [])
       setAnalysisStats(statsData || { totalEvents: 0, cleanedRecords: 0, duplicatesRemoved: 0, anomaliesDetected: 0 })
       setAuditEntries(auditData || [])
-      setLoading(false)
-    }).catch(err => {
-      console.error("Failed to fetch data:", err)
       setLoading(false)
     })
   }, [])
