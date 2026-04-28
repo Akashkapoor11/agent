@@ -4,7 +4,10 @@
       "Bash(python3 -c \"import zipfile; z=zipfile.ZipFile\\('Milan-fe.zip'\\); print\\('\\\\n'.join\\(z.namelist\\(\\)\\)\\)\")",
       "Bash(python3 -c \"import zipfile; z=zipfile.ZipFile\\('Milan-be.zip'\\); print\\('\\\\n'.join\\(z.namelist\\(\\)\\)\\)\")",
       "Bash(netstat -ano)",
-      "Bash(python3 -c ' *)"
+      "Bash(python3 -c ' *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)"
     ]
   }
 }
