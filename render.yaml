@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: milan-be
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    envVars:
+      - key: DB_CON_STR
+        sync: false
