@@ -1,14 +1,22 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException
 from fastapi.routing import APIRouter
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from fastapi.middleware.cors import CORSMiddleware
+import logging
 
 import models
 import schemas
 from database import engine, get_db
 
-app = FastAPI(title="AI Log Intelligence Backend")
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+app = FastAPI(
+    title="AI Log Intelligence Backend",
+    description="Security log analysis API for the MILAN AEGIS platform.",
+    version="1.0.0",
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -20,84 +28,105 @@ app.add_middleware(
 router = APIRouter(prefix="/milan-aegis")
 
 
+@router.get("/health")
+def health_check():
+    return {"status": "ok", "service": "milan-aegis"}
+
+
 @router.get("/api/logs/normalized")
 def get_normalized_logs(db: Session = Depends(get_db)):
-    logs = db.query(models.NormalizedEvent).order_by(models.NormalizedEvent.event_timestamp.desc()).all()
-    result = []
-    for event in logs:
-        nj = event.normalized_json or {}
-        source = nj.get('source', event.device or 'Unknown')
-        reason = nj.get('reason', '')
-        normalized_text = ' '.join(filter(None, [event.event_type, event.login_status, reason]))
-        result.append({
-            "id": str(event.event_id),
-            "timestamp": event.event_timestamp.strftime("%d/%m %H:%M:%S") if event.event_timestamp else "",
-            "user": event.user_email or "Unknown",
-            "event": (event.event_type or "Unknown").replace('_', ' ').title(),
-            "status": event.login_status or "unknown",
-            "system": source,
-            "ip": str(event.ip_address) if event.ip_address else "",
-            "location": event.geo_location or "Unknown",
-            "normalizedText": normalized_text,
-            "riskScore": float(event.risk_score) if event.risk_score else 0,
-            "anomalyFlag": event.anomaly_flag or False,
-            "original": nj,
-        })
-    return result
+    try:
+        logs = db.query(models.NormalizedEvent).order_by(models.NormalizedEvent.event_timestamp.desc()).all()
+        result = []
+        for event in logs:
+            nj = event.normalized_json or {}
+            source = nj.get('source', event.device or 'Unknown')
+            reason = nj.get('reason', '')
+            normalized_text = ' '.join(filter(None, [event.event_type, event.login_status, reason]))
+            result.append({
+                "id": str(event.event_id),
+                "timestamp": event.event_timestamp.strftime("%d/%m %H:%M:%S") if event.event_timestamp else "",
+                "user": event.user_email or "Unknown",
+                "event": (event.event_type or "Unknown").replace('_', ' ').title(),
+                "status": event.login_status or "unknown",
+                "system": source,
+                "ip": str(event.ip_address) if event.ip_address else "",
+                "location": event.geo_location or "Unknown",
+                "normalizedText": normalized_text,
+                "riskScore": float(event.risk_score) if event.risk_score else 0,
+                "anomalyFlag": event.anomaly_flag or False,
+                "original": nj,
+            })
+        return result
+    except Exception as e:
+        logger.error(f"Error fetching normalized logs: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch normalized logs")
 
 
 @router.get("/api/alerts")
 def get_alerts(db: Session = Depends(get_db)):
-    alerts = db.query(models.AnomalyAlert, models.NormalizedEvent).join(
-        models.NormalizedEvent, models.AnomalyAlert.event_id == models.NormalizedEvent.event_id
-    ).all()
-    result = []
-    for alert, event in alerts:
-        result.append({
-            "id": str(alert.alert_id),
-            "timestamp": event.event_timestamp.strftime("%d/%m %H:%M:%S") if event.event_timestamp else (alert.created_at.strftime("%d/%m %H:%M:%S") if alert.created_at else ""),
-            "user": event.user_email or "Unknown",
-            "system": event.normalized_json.get('source', 'Unknown') if event.normalized_json else 'Unknown',
-            "event": event.event_type or "Unknown",
-            "status": alert.alert_status.lower() if alert.alert_status else "open",
-            "riskScore": float(alert.risk_percent) if alert.risk_percent else 0,
-            "severity": alert.severity.lower() if alert.severity else 'medium',
-            "reason": alert.anomaly_reason,
-            "original": event.normalized_json,
-            "rowNumber": 1
-        })
-    return result
+    try:
+        alerts = db.query(models.AnomalyAlert, models.NormalizedEvent).join(
+            models.NormalizedEvent, models.AnomalyAlert.event_id == models.NormalizedEvent.event_id
+        ).all()
+        result = []
+        for alert, event in alerts:
+            result.append({
+                "id": str(alert.alert_id),
+                "timestamp": event.event_timestamp.strftime("%d/%m %H:%M:%S") if event.event_timestamp else (alert.created_at.strftime("%d/%m %H:%M:%S") if alert.created_at else ""),
+                "user": event.user_email or "Unknown",
+                "system": event.normalized_json.get('source', 'Unknown') if event.normalized_json else 'Unknown',
+                "event": event.event_type or "Unknown",
+                "status": alert.alert_status.lower() if alert.alert_status else "open",
+                "riskScore": float(alert.risk_percent) if alert.risk_percent else 0,
+                "severity": alert.severity.lower() if alert.severity else 'medium',
+                "reason": alert.anomaly_reason,
+                "original": event.normalized_json,
+                "rowNumber": 1
+            })
+        return result
+    except Exception as e:
+        logger.error(f"Error fetching alerts: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch alerts")
 
 
 @router.get("/api/stats")
 def get_stats(db: Session = Depends(get_db)):
-    total_raw = db.query(func.count(models.RawLog.log_id)).scalar() or 0
-    normalized_count = db.query(func.count(models.NormalizedEvent.event_id)).scalar() or 0
-    duplicates_count = db.query(func.count(models.RawLog.log_id)).filter(models.RawLog.is_duplicate == True).scalar() or 0
-    anomalies = db.query(func.count(models.AnomalyAlert.alert_id)).scalar() or 0
-    return {
-        "totalEvents": total_raw,
-        "cleanedRecords": normalized_count,
-        "duplicatesRemoved": duplicates_count,
-        "anomaliesDetected": anomalies,
-    }
+    try:
+        total_raw = db.query(func.count(models.RawLog.log_id)).scalar() or 0
+        normalized_count = db.query(func.count(models.NormalizedEvent.event_id)).scalar() or 0
+        duplicates_count = db.query(func.count(models.RawLog.log_id)).filter(models.RawLog.is_duplicate == True).scalar() or 0
+        anomalies = db.query(func.count(models.AnomalyAlert.alert_id)).scalar() or 0
+        return {
+            "totalEvents": total_raw,
+            "cleanedRecords": normalized_count,
+            "duplicatesRemoved": duplicates_count,
+            "anomaliesDetected": anomalies,
+        }
+    except Exception as e:
+        logger.error(f"Error fetching stats: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch stats")
 
 
 @router.get("/api/audit")
 def get_audit_logs(db: Session = Depends(get_db)):
-    audits = db.query(models.AuditLog).order_by(models.AuditLog.action_timestamp.desc()).all()
-    result = []
-    for audit in audits:
-        meta = audit.metadata_ or {}
-        action = audit.action_type or 'process'
-        result.append({
-            "id": str(audit.audit_id),
-            "type": action,
-            "title": meta.get('title', action.replace('_', ' ').title()),
-            "detail": meta.get('detail', f"Actor: {audit.actor or 'system'}"),
-            "timestamp": audit.action_timestamp.strftime("%d/%m %H:%M:%S") if audit.action_timestamp else "",
-        })
-    return result
+    try:
+        audits = db.query(models.AuditLog).order_by(models.AuditLog.action_timestamp.desc()).all()
+        result = []
+        for audit in audits:
+            meta = audit.metadata_ or {}
+            action = audit.action_type or 'process'
+            result.append({
+                "id": str(audit.audit_id),
+                "type": action,
+                "title": meta.get('title', action.replace('_', ' ').title()),
+                "detail": meta.get('detail', f"Actor: {audit.actor or 'system'}"),
+                "timestamp": audit.action_timestamp.strftime("%d/%m %H:%M:%S") if audit.action_timestamp else "",
+            })
+        return result
+    except Exception as e:
+        logger.error(f"Error fetching audit logs: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch audit logs")
 
 
 app.include_router(router)

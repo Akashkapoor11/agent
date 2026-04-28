@@ -15,38 +15,42 @@ export default function Alerts({ alerts, onSelectAlert }) {
           </div>
         </div>
 
-        <div style={{ overflowX: 'auto' }}>
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Timestamp</th>
-                <th>User</th>
-                <th>System</th>
-                <th>Event</th>
-                <th>Risk Score</th>
-                <th>Reason</th>
-                <th>Status</th>
-                <th>Detail</th>
-              </tr>
-            </thead>
-            <tbody>
-              {alerts.map(alert => (
-                <tr key={alert.id}>
-                  <td style={{ fontSize: 11, color: 'var(--n4)' }}>{alert.timestamp}</td>
-                  <td style={{ fontSize: 12 }}>{alert.user}</td>
-                  <td><span className="sys-chip">{alert.system}</span></td>
-                  <td style={{ fontSize: 12 }}>{alert.event}</td>
-                  <td><strong style={{ color: alert.riskScore >= 70 ? 'var(--error)' : 'inherit' }}>{alert.riskScore}</strong></td>
-                  <td style={{ fontSize: 12, minWidth: 190 }}>{alert.reason}</td>
-                  <td><span className={`badge badge-${alert.status}`}>{alert.status}</span></td>
-                  <td>
-                    <button className="btn btn-outline btn-sm" onClick={() => onSelectAlert(alert)}>View</button>
-                  </td>
+        {alerts.length === 0 ? (
+          <div className="empty-state">No anomaly alerts detected in the analyzed baseline.</div>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>User</th>
+                  <th>System</th>
+                  <th>Event</th>
+                  <th>Risk Score</th>
+                  <th>Reason</th>
+                  <th>Status</th>
+                  <th>Detail</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {alerts.map(alert => (
+                  <tr key={alert.id}>
+                    <td style={{ fontSize: 11, color: 'var(--n4)' }}>{alert.timestamp}</td>
+                    <td style={{ fontSize: 12 }}>{alert.user}</td>
+                    <td><span className="sys-chip">{alert.system}</span></td>
+                    <td style={{ fontSize: 12 }}>{alert.event}</td>
+                    <td><strong style={{ color: alert.riskScore >= 70 ? 'var(--error)' : 'inherit' }}>{alert.riskScore}</strong></td>
+                    <td style={{ fontSize: 12, minWidth: 190 }}>{alert.reason}</td>
+                    <td><span className={`badge badge-${alert.status}`}>{alert.status}</span></td>
+                    <td>
+                      <button className="btn btn-outline btn-sm" onClick={() => onSelectAlert(alert)}>View</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   )

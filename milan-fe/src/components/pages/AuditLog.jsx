@@ -15,21 +15,25 @@ export default function AuditLog({ entries }) {
           </div>
         </div>
 
-        <div>
-          {entries.map(entry => {
-            const type = entry.type || 'process'
-            return (
-              <div key={entry.id || entry.audit_id} className="audit-row">
-                <div className={`audit-icon audit-${type}`}>{type.slice(0, 2).toUpperCase()}</div>
-                <div style={{ flex: 1 }}>
-                  <div className="audit-title">{entry.title || entry.action_type || type}</div>
-                  <div className="audit-detail">{entry.detail || entry.actor || ''}</div>
+        {entries.length === 0 ? (
+          <div className="empty-state">No audit events recorded yet.</div>
+        ) : (
+          <div>
+            {entries.map(entry => {
+              const type = entry.type || 'process'
+              return (
+                <div key={entry.id || entry.audit_id} className="audit-row">
+                  <div className={`audit-icon audit-${type}`}>{type.slice(0, 2).toUpperCase()}</div>
+                  <div style={{ flex: 1 }}>
+                    <div className="audit-title">{entry.title || entry.action_type || type}</div>
+                    <div className="audit-detail">{entry.detail || entry.actor || ''}</div>
+                  </div>
+                  <div className="audit-time">{entry.timestamp || entry.action_timestamp || ''}</div>
                 </div>
-                <div className="audit-time">{entry.timestamp || entry.action_timestamp || ''}</div>
-              </div>
-            )
-          })}
-        </div>
+              )
+            })}
+          </div>
+        )}
       </div>
     </div>
   )

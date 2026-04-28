@@ -42,8 +42,14 @@ export default function Insights({ processedData, alerts }) {
       <div className="insights-grid">
         <div className="card insight-card">
           <div className="card-title">Peak Login Hours</div>
-          <div className="insight-number">{String(peakHour[0]).padStart(2, '0')}:00</div>
-          <p>{peakHour[1]} events occurred during this hour.</p>
+          {peakHour[1] > 0 ? (
+            <>
+              <div className="insight-number">{String(peakHour[0]).padStart(2, '0')}:00</div>
+              <p>{peakHour[1]} events occurred during this hour.</p>
+            </>
+          ) : (
+            <p className="empty-state-inline">No login data available.</p>
+          )}
         </div>
 
         <div className="card insight-card">

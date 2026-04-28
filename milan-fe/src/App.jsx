@@ -21,6 +21,7 @@ export default function App() {
   const [auditEntries, setAuditEntries] = useState([])
   
   const [loading, setLoading] = useState(true)
+  const [apiError, setApiError] = useState(false)
 
   const [showProfile, setShowProfile] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
@@ -34,9 +35,10 @@ export default function App() {
     Promise.all([
       safeFetch(`${apiUrl}/api/alerts`, []),
       safeFetch(`${apiUrl}/api/logs/normalized`, []),
-      safeFetch(`${apiUrl}/api/stats`, { totalEvents: 0, cleanedRecords: 0, duplicatesRemoved: 0, anomaliesDetected: 0 }),
+      safeFetch(`${apiUrl}/api/stats`, null),
       safeFetch(`${apiUrl}/api/audit`, [])
     ]).then(([alertsData, logsData, statsData, auditData]) => {
+      if (!statsData) setApiError(true)
       setAlerts(alertsData || [])
       setAnalyzedLogs(logsData || [])
       setAnalysisStats(statsData || { totalEvents: 0, cleanedRecords: 0, duplicatesRemoved: 0, anomaliesDetected: 0 })
@@ -118,6 +120,16 @@ export default function App() {
     }
   }
 
+  if (loading) {
+    return (
+      <div className="desktop splash-screen">
+        <div className="splash-orb" />
+        <div className="splash-label">AEGIS · AI · AGENT</div>
+        <div className="splash-sub">Loading security intelligence...</div>
+      </div>
+    )
+  }
+
   return (
     <div className="desktop">
       <TopBar
@@ -126,6 +138,12 @@ export default function App() {
         onBellClick={() => setShowNotifications(true)}
         onProfileClick={() => setShowProfile(true)}
       />
+
+      {apiError && (
+        <div className="api-error-banner">
+          ⚠ Unable to reach the backend. Displaying cached or empty data.
+        </div>
+      )}
 
       <div className="main-content">
         {renderView()}
