@@ -1,18 +1,18 @@
 services:
 
   app:
-    # Self-contained image bundling Postgres 16 + FastAPI. Build context
-    # is milan-be/ so the same image works on Render with
-    # Root Directory = milan-be.
+    # Build context is the repo root so the Dockerfile can copy from
+    # both milan-be/ and milan-fe/. The image bundles Postgres 16,
+    # FastAPI, and the built React FE in a single container.
     build:
-      context: ./milan-be
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: milan-be/Dockerfile
     ports:
       - "5000:5000"
     volumes:
-      # Persist Postgres data across local restarts. On Render's free
-      # tier this volume isn't mounted, so the bundled seed reloads on
-      # every cold start (which is fine for a read-only demo).
+      # Persist Postgres across local restarts. On Render's free tier
+      # this volume isn't mounted, so the bundled seed reloads each
+      # cold start (fine for a read-only demo).
       - pgdata:/var/lib/postgresql/data
 
 volumes:

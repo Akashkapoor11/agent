@@ -9,3 +9,4 @@ IT-Log-Intelligence-Agent---Queen-s-Gambit-Cartel/
 .env
 *.env
 !.env.example
+milan-fe/dist/
