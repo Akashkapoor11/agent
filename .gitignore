@@ -6,3 +6,6 @@ node_modules/
 .claude/
 config.js
 IT-Log-Intelligence-Agent---Queen-s-Gambit-Cartel/
+.env
+*.env
+!.env.example
