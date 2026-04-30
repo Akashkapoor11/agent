@@ -17,6 +17,7 @@ from database import engine, get_db
 FE_DIST = os.path.realpath(
     os.path.join(os.path.dirname(__file__), "..", "milan-fe", "dist")
 )
+FE_BUNDLED = os.path.isdir(FE_DIST)
 
 logging.basicConfig(level=logging.ERROR, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
@@ -206,25 +207,44 @@ def get_audit_logs(db: Session = Depends(get_db)):
 app.include_router(router)
 
 
-# Serve the built FE SPA from the same process / port.
+# Serve the built FE SPA from the same process / port when bundled.
+# In the split deployment (Render Static Site for FE + Web Service for BE)
+# FE_BUNDLED is False and these routes return a JSON health/404.
 @app.get("/")
 def root_redirect():
-    return RedirectResponse("/milan-aegis-fe/")
+    if FE_BUNDLED:
+        return RedirectResponse("/milan-aegis-fe/")
+    return JSONResponse({"service": "milan-aegis-be", "status": "ok"})
 
 
 @app.get("/milan-fe")
 @app.get("/milan-fe/{full_path:path}")
 def legacy_redirect(full_path: str = ""):
-    return RedirectResponse(f"/milan-aegis-fe/{full_path}")
+    if FE_BUNDLED:
+        return RedirectResponse(f"/milan-aegis-fe/{full_path}")
+    return JSONResponse(
+        {"error": "frontend_not_bundled", "message": "FE is hosted separately"},
+        status_code=404,
+    )
 
 
 @app.get("/milan-aegis-fe")
 def fe_no_slash():
-    return RedirectResponse("/milan-aegis-fe/")
+    if FE_BUNDLED:
+        return RedirectResponse("/milan-aegis-fe/")
+    return JSONResponse(
+        {"error": "frontend_not_bundled", "message": "FE is hosted separately"},
+        status_code=404,
+    )
 
 
 @app.get("/milan-aegis-fe/{full_path:path}")
 def serve_spa(full_path: str = ""):
+    if not FE_BUNDLED:
+        return JSONResponse(
+            {"error": "frontend_not_bundled", "message": "FE is hosted separately"},
+            status_code=404,
+        )
     candidate = os.path.realpath(os.path.join(FE_DIST, full_path))
     # Path-traversal guard + serve real file when present, else SPA fallback.
     if (
