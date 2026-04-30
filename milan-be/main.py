@@ -207,53 +207,16 @@ def get_audit_logs(db: Session = Depends(get_db)):
 app.include_router(router)
 
 
-# Serve the built FE SPA from the same process / port when bundled.
-# In the split deployment (Render Static Site for FE + Web Service for BE)
-# FE_BUNDLED is False and these routes return a JSON health/404.
-@app.get("/")
-def root_redirect():
-    if FE_BUNDLED:
-        return RedirectResponse("/milan-aegis-fe/")
-    return JSONResponse({"service": "milan-aegis-be", "status": "ok"})
-
-
-@app.get("/milan-fe")
-@app.get("/milan-fe/{full_path:path}")
-def legacy_redirect(full_path: str = ""):
-    if FE_BUNDLED:
-        return RedirectResponse(f"/milan-aegis-fe/{full_path}")
-    return JSONResponse(
-        {"error": "frontend_not_bundled", "message": "FE is hosted separately"},
-        status_code=404,
-    )
-
-
-@app.get("/milan-aegis-fe")
-def fe_no_slash():
-    if FE_BUNDLED:
-        return RedirectResponse("/milan-aegis-fe/")
-    return JSONResponse(
-        {"error": "frontend_not_bundled", "message": "FE is hosted separately"},
-        status_code=404,
-    )
-
-
-@app.get("/milan-aegis-fe/{full_path:path}")
-def serve_spa(full_path: str = ""):
-    if not FE_BUNDLED:
-        return JSONResponse(
-            {"error": "frontend_not_bundled", "message": "FE is hosted separately"},
-            status_code=404,
-        )
-    candidate = os.path.realpath(os.path.join(FE_DIST, full_path))
-    # Path-traversal guard + serve real file when present, else SPA fallback.
-    if (
-        full_path
-        and candidate.startswith(FE_DIST)
-        and os.path.isfile(candidate)
-    ):
-        return FileResponse(candidate)
-    return FileResponse(os.path.join(FE_DIST, "index.html"))
+# Pure backend: no root route, no FE-serving routes. Any path other
+# than /milan-aegis/api/* falls through to the StarletteHTTPException
+# handler above, which returns the standard FastAPI-style JSON 404:
+#
+#   {"error":"HTTPException","status_code":404,"message":"Not Found","path":"..."}
+#
+# In the unified Docker deploy (root /Dockerfile or local docker-compose)
+# the FE is served by a separate path layer (nginx in milan-fe or the
+# Vite dev server) that proxies /milan-aegis/api/* here. This file does
+# not need to know about the FE.
 
 
 if __name__ == "__main__":
