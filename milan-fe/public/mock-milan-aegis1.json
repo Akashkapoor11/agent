@@ -1,0 +1,262 @@
+{
+  "title": "Milan — Aegis AI Log Intelligence walkthrough",
+  "description": "End-to-end tour of the Aegis read-only log analysis dashboard, walking Milan's five surfaces: home widgets, dashboard KPIs and charts, alerts table, summary (sources, policy, reports), and audit log.",
+  "meta": {
+    "dashboardVersion": "MILAN-AEGIS v1.0",
+    "author": "Milan",
+    "targetAudience": "IT Admin, Security Operations review",
+    "pacingNote": "Pauses kept short. TTS adds ~500ms of startup latency per utterance, and the dashboard has five surfaces to cover — long pauses make it drag."
+  },
+  "steps": [
+    {
+      "id": "intro",
+      "description": "Opening line — no UI action, set the stage.",
+      "action": "none",
+      "speak": {
+        "before": "Hi, I'm Milan. Let me walk you through what the Aegis dashboard is showing for the latest analyzed batch."
+      }
+    },
+
+    {
+      "id": "home-frame",
+      "description": "Frame the Home desktop.",
+      "action": "scroll",
+      "selector": "#home-desktop",
+      "highlight": { "color": "#5929d0", "durationMs": 1200 },
+      "speak": {
+        "before": "We start on Aegis Home.",
+        "after": "Three live widgets sit on the desktop — clock, date, and notifications."
+      }
+    },
+
+    {
+      "id": "home-clock",
+      "description": "Spotlight the clock widget.",
+      "action": "scroll",
+      "selector": "#clock-widget",
+      "highlight": { "color": "#CF008B", "durationMs": 1300 },
+      "speak": {
+        "before": "The clock widget.",
+        "after": "Time of day plus a contextual greeting."
+      }
+    },
+
+    {
+      "id": "home-notifications",
+      "description": "Spotlight the notifications widget.",
+      "action": "scroll",
+      "selector": "#notifications-widget-btn",
+      "highlight": { "durationMs": 1100 },
+      "speak": {
+        "before": "Notifications card below the date.",
+        "after": "Total alert count and a short preview of the newest anomalies."
+      }
+    },
+
+    {
+      "id": "open-dashboard",
+      "description": "Open the Dashboard from the dock.",
+      "action": "click",
+      "selector": "[data-testid='nav-dashboard']",
+      "highlight": { "durationMs": 1000 },
+      "speak": {
+        "before": "Let's open the Dashboard.",
+        "after": "Metrics, charts, and event feed from the analyzed log baseline."
+      }
+    },
+
+    {
+      "id": "dash-kpis",
+      "description": "Frame the four KPI tiles.",
+      "action": "scroll",
+      "selector": "#dashboard-kpi-grid",
+      "highlight": { "color": "#5929d0", "durationMs": 1200 },
+      "speak": {
+        "before": "Four headline KPIs across the top.",
+        "after": "Total Events, Cleaned Records, Duplicates Removed, and Anomalies Detected."
+      }
+    },
+
+    {
+      "id": "anomalies-card",
+      "description": "Spotlight the Anomalies Detected KPI.",
+      "action": "scroll",
+      "selector": "#kpi-anomalies-detected",
+      "highlight": { "color": "#DC2626", "durationMs": 1500 },
+      "speak": {
+        "before": "Anomalies Detected.",
+        "after": "Risk score forty-five or above. Must reconcile with the donut total on the right."
+      }
+    },
+
+    {
+      "id": "login-chart",
+      "description": "Frame the Login Activity bar chart.",
+      "action": "scroll",
+      "selector": "#login-activity-card",
+      "highlight": { "durationMs": 1100 },
+      "speak": {
+        "before": "Login Activity.",
+        "after": "Hourly distribution across a twenty-four-hour window."
+      }
+    },
+
+    {
+      "id": "risk-donut",
+      "description": "Frame the Risk Distribution donut.",
+      "action": "scroll",
+      "selector": "#risk-distribution-card",
+      "highlight": { "color": "#DC2626", "durationMs": 1500 },
+      "speak": {
+        "before": "Risk Distribution.",
+        "after": "Low, Medium, High, and Critical legend values sum to the Anomalies Detected count."
+      },
+      "pause": { "afterMs": 200 }
+    },
+
+    {
+      "id": "event-feed",
+      "description": "Frame the Event Feed at the bottom.",
+      "action": "scroll",
+      "selector": "#event-feed-card",
+      "highlight": { "color": "#CF008B", "durationMs": 1300 },
+      "speak": {
+        "before": "Event Feed below the charts.",
+        "during": "User, event, status, timestamp.",
+        "after": "Latest normalized security events from this batch."
+      },
+      "pause": { "afterMs": 200 }
+    },
+
+    {
+      "id": "open-alerts",
+      "description": "Switch to Alerts.",
+      "action": "click",
+      "selector": "[data-testid='nav-alerts']",
+      "highlight": { "durationMs": 1000 },
+      "speak": {
+        "before": "Alerts next.",
+        "after": "The full anomaly table — source of truth for the IT Admin's email decision."
+      }
+    },
+
+    {
+      "id": "alerts-table",
+      "description": "Frame the Anomaly Alerts table.",
+      "action": "scroll",
+      "selector": "#alerts-table",
+      "highlight": { "durationMs": 1200 },
+      "speak": {
+        "before": "Anomaly Alerts.",
+        "after": "Six columns — Timestamp, User, Event, Risk Score, Reason, and Status."
+      }
+    },
+
+    {
+      "id": "critical-alert",
+      "description": "Spotlight the top anomaly row.",
+      "action": "scroll",
+      "selector": "#alerts-tbody tr:first-child",
+      "highlight": { "color": "#DC2626", "durationMs": 1500 },
+      "speak": {
+        "before": "Top row — usually the highest risk.",
+        "after": "Status stays pending until the email decision flips it on the next cycle."
+      },
+      "pause": { "afterMs": 200 }
+    },
+
+    {
+      "id": "open-summary",
+      "description": "Switch to Summary.",
+      "action": "click",
+      "selector": "[data-testid='nav-summary']",
+      "highlight": { "durationMs": 1000 },
+      "speak": {
+        "before": "Summary.",
+        "after": "Sources, Policy Findings, and Reports stacked in one view."
+      }
+    },
+
+    {
+      "id": "summary-sources",
+      "description": "Frame the Sources card.",
+      "action": "scroll",
+      "selector": "#sources-card",
+      "highlight": { "color": "#5929d0", "durationMs": 1200 },
+      "speak": {
+        "before": "Sources first.",
+        "after": "Per-source-family event counts with a one-line analysis comment."
+      }
+    },
+
+    {
+      "id": "summary-policy",
+      "description": "Frame the Policy Findings card.",
+      "action": "scroll",
+      "selector": "#policy-card",
+      "highlight": { "color": "#5929d0", "durationMs": 1200 },
+      "speak": {
+        "before": "Policy Findings.",
+        "after": "Compliance findings inferred from the analyzed log events."
+      }
+    },
+
+    {
+      "id": "summary-reports",
+      "description": "Frame the Reports card.",
+      "action": "scroll",
+      "selector": "#reports-card",
+      "highlight": { "durationMs": 1200 },
+      "speak": {
+        "before": "Reports.",
+        "after": "Static summaries generated from the analyzed activity."
+      }
+    },
+
+    {
+      "id": "open-audit",
+      "description": "Switch to the Audit Log.",
+      "action": "click",
+      "selector": "[data-testid='nav-audit']",
+      "highlight": { "durationMs": 1000 },
+      "speak": {
+        "before": "Audit Log.",
+        "after": "Read-only trace of analysis refreshes, anomaly detection, and dashboard review activity."
+      }
+    },
+
+    {
+      "id": "audit-list",
+      "description": "Frame the Workspace Activity timeline.",
+      "action": "scroll",
+      "selector": "#workspace-activity-card",
+      "highlight": { "color": "#CF008B", "durationMs": 1300 },
+      "speak": {
+        "before": "Workspace Activity timeline, newest first.",
+        "during": "Daily reports, anomaly detections, ingestion resumes.",
+        "after": "One chronological story of what the system observed."
+      },
+      "pause": { "afterMs": 200 }
+    },
+
+    {
+      "id": "return-dashboard",
+      "description": "Return to the Dashboard.",
+      "action": "click",
+      "selector": "[data-testid='nav-dashboard']",
+      "highlight": { "durationMs": 1000 },
+      "speak": {
+        "before": "Back to the Dashboard.",
+        "after": "That's the loop — five read-only surfaces, IT Admin in the loop via email."
+      }
+    },
+
+    {
+      "id": "outro",
+      "action": "none",
+      "speak": {
+        "before": "Anything you'd like me to dig into?"
+      }
+    }
+  ]
+}

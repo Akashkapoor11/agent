@@ -1,0 +1,13 @@
+**/node_modules
+**/dist
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/*.zip
+**/*.log
+.git
+.gitignore
+**/.env
+IT-Log-Intelligence-Agent---Queen-s-Gambit-Cartel
+milan-fe/Dockerfile
+milan-fe/nginx.conf

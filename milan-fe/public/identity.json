@@ -1,0 +1,263 @@
+{
+  "title": "Milan — Aegis AI Log Intelligence walkthrough",
+  "description": "End-to-end tour of the Aegis read-only log analysis dashboard. Walks Milan's five surfaces: Home (clock, date, notifications), Dashboard (KPIs, charts, event feed), Alerts (anomaly review table), Summary (Sources, Policy Findings, Reports stacked in one view), and Audit Log. Read-only observation only — final Accept/Reject decisions are taken by the IT Admin via email and reflected on the next ingestion cycle.",
+  "meta": {
+    "dashboardVersion": "MILAN-AEGIS v1.0",
+    "author": "Milan",
+    "targetAudience": "IT Admin, Security Operations review",
+    "pacingNote": "Pauses kept short. TTS adds ~500ms of startup latency per utterance, and the dashboard has five surfaces to cover — long pauses make it drag."
+  },
+  "steps": [
+    {
+      "id": "intro",
+      "description": "Opening line — no UI action, set the stage and confirm read-only posture.",
+      "action": "none",
+      "speak": {
+        "before": "Hello. I am Milan, your read-only log analysis companion. Let me walk you through what the Aegis dashboard is showing for the latest analyzed batch."
+      }
+    },
+
+    {
+      "id": "home-frame",
+      "description": "Frame the Home desktop — the system entry point with clock, date, and notifications.",
+      "action": "scroll",
+      "selector": "#home-desktop",
+      "highlight": { "color": "#5929d0", "durationMs": 1200 },
+      "speak": {
+        "before": "We start on the Aegis Home — the desktop you see before opening any app.",
+        "after": "Three live widgets sit on the desktop: the time-of-day clock, today's date with calendar, and the notifications card with the most recent anomalies."
+      }
+    },
+
+    {
+      "id": "home-clock",
+      "description": "Spotlight the clock widget on the home desktop.",
+      "action": "scroll",
+      "selector": "#clock-widget",
+      "highlight": { "color": "#CF008B", "durationMs": 1300 },
+      "speak": {
+        "before": "On the left, the live clock widget.",
+        "after": "Time of day and a contextual greeting — the dashboard refreshes against this baseline."
+      }
+    },
+
+    {
+      "id": "home-notifications",
+      "description": "Spotlight the notifications widget — preview of the latest analyzed alerts.",
+      "action": "scroll",
+      "selector": "#notifications-widget-btn",
+      "highlight": { "durationMs": 1100 },
+      "speak": {
+        "before": "Below the date, the Notifications card.",
+        "after": "Total alert count plus a short preview of the newest anomalies. Opening it reveals the full modal — but the table view on the Alerts screen is the source of truth."
+      }
+    },
+
+    {
+      "id": "open-dashboard",
+      "description": "Open the Dashboard from the bottom dock.",
+      "action": "click",
+      "selector": "[data-testid='nav-dashboard']",
+      "highlight": { "durationMs": 1000 },
+      "speak": {
+        "before": "Let us open the Dashboard — the working analytical surface.",
+        "after": "Metrics, charts, and event feed from the analyzed security log baseline."
+      }
+    },
+
+    {
+      "id": "dash-kpis",
+      "description": "Spotlight the four KPI tiles row on the Dashboard.",
+      "action": "scroll",
+      "selector": "#dashboard-kpi-grid",
+      "highlight": { "color": "#5929d0", "durationMs": 1200 },
+      "speak": {
+        "before": "The headline KPI row carries four metrics for this batch.",
+        "after": "Total Events analyzed, Cleaned Records normalized, Duplicates Removed by exact-row match, and Anomalies Detected at risk score forty-five or above."
+      }
+    },
+
+    {
+      "id": "anomalies-card",
+      "description": "Spotlight the Anomalies Detected KPI — the load-bearing tile that must equal the donut total.",
+      "action": "scroll",
+      "selector": "#kpi-anomalies-detected",
+      "highlight": { "color": "#DC2626", "durationMs": 1500 },
+      "speak": {
+        "before": "Anomalies Detected is the load-bearing tile.",
+        "after": "That number must reconcile with the Risk Distribution donut total to the right."
+      }
+    },
+
+    {
+      "id": "login-chart",
+      "description": "Frame the Login Activity bar chart — hourly distribution across the analyzed window.",
+      "action": "scroll",
+      "selector": "#login-activity-card",
+      "highlight": { "durationMs": 1100 },
+      "speak": {
+        "before": "Login Activity — a twenty-four-hour window of logins across the analyzed baseline.",
+        "after": "I read the peak hour and the rough shape only. I will not invent values for bars I cannot see."
+      }
+    },
+
+    {
+      "id": "risk-donut",
+      "description": "Frame the Risk Distribution donut — anomalies broken down by Low, Medium, High, Critical.",
+      "action": "scroll",
+      "selector": "#risk-distribution-card",
+      "highlight": { "color": "#DC2626", "durationMs": 1500 },
+      "speak": {
+        "before": "Risk Distribution — anomalies broken down by severity.",
+        "after": "Low, Medium, High, and Critical legend values must sum to the Anomalies Detected count on the left."
+      },
+      "pause": { "afterMs": 200 }
+    },
+
+    {
+      "id": "event-feed",
+      "description": "Frame the Event Feed of latest normalized security events at the bottom of the Dashboard.",
+      "action": "scroll",
+      "selector": "#event-feed-card",
+      "highlight": { "color": "#CF008B", "durationMs": 1300 },
+      "speak": {
+        "before": "Below the charts, the Event Feed lists the latest normalized security events.",
+        "during": "Each row carries a status dot, the user, the event and outcome, and a timestamp.",
+        "after": "The ANALYZED badge in the header confirms this slice reflects the latest batch."
+      },
+      "pause": { "afterMs": 200 }
+    },
+
+    {
+      "id": "open-alerts",
+      "description": "Switch to the Alerts page for the full anomaly table.",
+      "action": "click",
+      "selector": "[data-testid='nav-alerts']",
+      "highlight": { "durationMs": 1000 },
+      "speak": {
+        "before": "Now Alerts.",
+        "after": "Analyzed anomalies with risk scores, reasons, and review status — the source of truth for the IT Admin's email Accept or Reject decision."
+      }
+    },
+
+    {
+      "id": "alerts-table",
+      "description": "Frame the Anomaly Alerts table with all six columns.",
+      "action": "scroll",
+      "selector": "#alerts-table",
+      "highlight": { "durationMs": 1200 },
+      "speak": {
+        "before": "These anomalies are flagged based on deviation from baseline behavior.",
+        "after": "Six columns: Timestamp, User, Event, Risk Score, Reason, and Status. Most rows are pending; approval flips the status pill on the next ingestion cycle."
+      }
+    },
+
+    {
+      "id": "critical-alert",
+      "description": "Spotlight the first anomaly row — typically the highest-risk critical entry.",
+      "action": "scroll",
+      "selector": "#alerts-tbody tr:first-child",
+      "highlight": { "color": "#DC2626", "durationMs": 1500 },
+      "speak": {
+        "before": "Here is the top row.",
+        "during": "Risk score, severity colour, and the rationale that earned the flag.",
+        "after": "Status remains pending until the email decision flips it on the next ingestion cycle."
+      },
+      "pause": { "afterMs": 200 }
+    },
+
+    {
+      "id": "open-summary",
+      "description": "Switch to the Summary tab — Sources, Policy Findings, and Reports stacked in one view.",
+      "action": "click",
+      "selector": "[data-testid='nav-summary']",
+      "highlight": { "durationMs": 1000 },
+      "speak": {
+        "before": "Next, Summary.",
+        "after": "Sources health, policy findings, and report status — combined into one read-only surface."
+      }
+    },
+
+    {
+      "id": "summary-sources",
+      "description": "Frame the Sources card on the Summary screen.",
+      "action": "scroll",
+      "selector": "#sources-card",
+      "highlight": { "color": "#5929d0", "durationMs": 1200 },
+      "speak": {
+        "before": "Top of Summary, the Sources card.",
+        "after": "Per-source-family event counts and a one-line analysis comment for each system represented in the analyzed baseline."
+      }
+    },
+
+    {
+      "id": "summary-policy",
+      "description": "Frame the Policy Findings card.",
+      "action": "scroll",
+      "selector": "#policy-card",
+      "highlight": { "color": "#5929d0", "durationMs": 1200 },
+      "speak": {
+        "before": "Below Sources, Policy Findings.",
+        "after": "Compliance and policy findings inferred from the analyzed log events — surfaced here, not enforced from the UI."
+      }
+    },
+
+    {
+      "id": "summary-reports",
+      "description": "Frame the Reports card at the bottom of the Summary screen.",
+      "action": "scroll",
+      "selector": "#reports-card",
+      "highlight": { "durationMs": 1200 },
+      "speak": {
+        "before": "And at the bottom, the Reports card.",
+        "after": "Static summaries generated from the analyzed activity, each marked Ready with a one-line headline."
+      }
+    },
+
+    {
+      "id": "open-audit",
+      "description": "Switch to the Audit Log for the chronological workspace activity timeline.",
+      "action": "click",
+      "selector": "[data-testid='nav-audit']",
+      "highlight": { "durationMs": 1000 },
+      "speak": {
+        "before": "Audit Log next.",
+        "after": "Read-only trace of analysis refreshes, anomaly detection, and dashboard review activity."
+      }
+    },
+
+    {
+      "id": "audit-list",
+      "description": "Frame the Workspace Activity timeline newest-first.",
+      "action": "scroll",
+      "selector": "#workspace-activity-card",
+      "highlight": { "color": "#CF008B", "durationMs": 1300 },
+      "speak": {
+        "before": "The Workspace Activity timeline holds the recent audit events, newest first.",
+        "during": "Daily security reports, exfiltration risks, anomaly detections, ingestion resumes, and privilege escalation alerts.",
+        "after": "Mixing analyses, ingestions, and reports is intentional — one chronological story of what the system observed and when."
+      },
+      "pause": { "afterMs": 200 }
+    },
+
+    {
+      "id": "return-dashboard",
+      "description": "Return to the Dashboard to close the tour.",
+      "action": "click",
+      "selector": "[data-testid='nav-dashboard']",
+      "highlight": { "durationMs": 1000 },
+      "speak": {
+        "before": "Coming back to the Dashboard.",
+        "after": "That is the full picture — Home, Dashboard, Alerts, Summary, and Audit. Five read-only surfaces, one analyzed batch, and the IT Admin in the loop via email."
+      }
+    },
+
+    {
+      "id": "outro",
+      "action": "none",
+      "speak": {
+        "before": "Final Accept or Reject decisions are taken via email and will be reflected on the next ingestion cycle. Anything you would like me to dig into?"
+      }
+    }
+  ]
+}

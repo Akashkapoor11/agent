@@ -16,24 +16,20 @@ services:
       timeout: 5s
       retries: 10
 
-  be:
-    build: ./milan-be
-    environment:
-      DB_CON_STR: "dbname=chitti_apps user=milan password=isi4ja8# host=db port=5432"
-    depends_on:
-      db:
-        condition: service_healthy
-
-  fe:
+  app:
     build:
-      context: ./milan-fe
+      context: .
+      dockerfile: milan-be/Dockerfile
       args:
         VITE_API_URL: /milan-aegis/api
         BASE_PATH: /milan-aegis-fe/
+    environment:
+      DB_CON_STR: "dbname=chitti_apps user=milan password=isi4ja8# host=db port=5432"
     ports:
       - "5000:5000"
     depends_on:
-      - be
+      db:
+        condition: service_healthy
 
 volumes:
   pgdata:
