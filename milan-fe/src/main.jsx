@@ -1,18 +1,18 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { BrowserRouter } from "react-router-dom";
+import { HashRouter } from "react-router-dom";
 import App from "./App.jsx";
 import "./styles/global.css";
 
-// Path-based routing under /Milan-aegis-fe/. Nginx may rewrite the prefix away
-// in the container; in that case BASE_NAME stays correct because window.location
-// already includes the public path during local dev.
-const BASE_NAME = (import.meta.env.BASE_URL || "/Milan-aegis-fe/").replace(/\/$/, "");
+// HashRouter keeps every route inside the URL hash (e.g. /#/dashboard).
+// The hash never reaches the server, so the static host never sees an
+// unknown path and never returns a 404. This makes the SPA portable
+// across any static host (Render, GitHub Pages, S3) with zero config.
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <BrowserRouter basename={BASE_NAME}>
+    <HashRouter>
       <App />
-    </BrowserRouter>
+    </HashRouter>
   </React.StrictMode>
 );
