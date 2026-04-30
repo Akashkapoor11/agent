@@ -29,19 +29,35 @@ def main() -> int:
         print(f"SQL files missing in {SQL_DIR}", file=sys.stderr)
         return 1
 
-    with engine.connect() as conn:
+    # Use the underlying psycopg2 connection directly. SQLAlchemy's
+    # text() parses ':name' as bind parameters and chokes on PostgreSQL
+    # cast syntax like '::TIMESTAMP' that appears throughout the DML.
+    # Raw cursor.execute sidesteps that entirely.
+    with engine.connect() as sa_conn:
+        raw = sa_conn.connection
+        cur = raw.cursor()
+
+        # database.py sets search_path to 'milan' on connect (so FastAPI
+        # queries find tables without a schema prefix). On a fresh DB
+        # that schema does not exist yet, which makes CREATE EXTENSION
+        # fail with "no schema has been selected to create in". Reset
+        # the search_path so the extension lands in 'public' and the
+        # DDL then creates the milan schema cleanly.
+        cur.execute("SET search_path TO public")
+
         print("Ensuring pgcrypto extension exists...")
-        conn.execute(text("CREATE EXTENSION IF NOT EXISTS pgcrypto"))
+        cur.execute("CREATE EXTENSION IF NOT EXISTS pgcrypto")
 
         print(f"Applying {DDL_PATH}...")
         with open(DDL_PATH, "r", encoding="utf-8") as f:
-            conn.execute(text(f.read()))
+            cur.execute(f.read())
 
         print(f"Applying {DML_PATH}...")
         with open(DML_PATH, "r", encoding="utf-8") as f:
-            conn.execute(text(f.read()))
+            cur.execute(f.read())
 
-        conn.commit()
+        raw.commit()
+        cur.close()
 
     print("Bootstrap complete.")
     return 0
