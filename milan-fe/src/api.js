@@ -4,19 +4,20 @@
 // This module fans those out into the higher-level shapes the screens expect.
 //
 // Resolution order for the API base URL:
-//   1. VITE_API_URL build-time env var (lets the Aegis pipeline pin a specific BE).
-//   2. If served from agent-1-dley.onrender.com (the FE Static Site), call the
-//      paired backend at agent-2-tkwd.onrender.com directly. This avoids the
-//      need to configure Render rewrite rules in the Static Site dashboard.
-//   3. Otherwise fall back to the same-origin path '/milan-aegis/api', which
-//      works when the FE and BE are served by the same host (local dev with
-//      Vite's proxy, or unified Docker image where FastAPI serves both).
+//   1. window.MILAN_API_BASE — runtime config from public/config.js. Edit
+//      that file and redeploy to point the dashboard at a different backend
+//      without recompiling the source.
+//   2. VITE_API_URL — build-time env var (e.g. set by the Aegis pipeline).
+//   3. Same-origin fallback '/milan-aegis/api' — works for unified Docker
+//      images and any deploy where the FE host proxies API calls (Vite dev
+//      server, nginx in milan-fe, etc.).
 
 function resolveApiBase() {
-  const fromEnv = import.meta.env.VITE_API_URL;
-  if (fromEnv) return fromEnv;
-  if (typeof window !== "undefined" && window.location?.hostname === "agent-1-dley.onrender.com") {
-    return "https://agent-2-tkwd.onrender.com/milan-aegis/api";
+  if (typeof window !== "undefined" && window.MILAN_API_BASE) {
+    return window.MILAN_API_BASE;
+  }
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
   }
   return "/milan-aegis/api";
 }
