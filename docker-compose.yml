@@ -5,13 +5,15 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: chitti_apps
+      POSTGRES_DB: milan
+    ports:
+      - "5433:5432"
     volumes:
       - ./milan-db/milan-ddl.sql:/docker-entrypoint-initdb.d/01-ddl.sql
       - ./milan-db/milan-dml.sql:/docker-entrypoint-initdb.d/02-dml.sql
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d chitti_apps"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d milan"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -19,7 +21,7 @@ services:
   be:
     build: ./milan-be
     environment:
-      DB_CON_STR: postgresql+psycopg2://postgres:postgres@db:5432/chitti_apps
+      DB_CON_STR: postgresql+psycopg2://postgres:postgres@db:5432/milan
     depends_on:
       db:
         condition: service_healthy
@@ -28,9 +30,10 @@ services:
     build:
       context: ./milan-fe
       args:
-        VITE_API_URL: /milan-aegis
+        VITE_API_URL: /milan-aegis/api
+        BASE_PATH: /milan-aegis-fe/
     ports:
-      - "80:5000"
+      - "5000:5000"
     depends_on:
       - be
 

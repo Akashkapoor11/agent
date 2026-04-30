@@ -1,17 +1,22 @@
 from fastapi import FastAPI, Depends, Request
 from fastapi.routing import APIRouter
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse, RedirectResponse
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from fastapi.middleware.cors import CORSMiddleware
+import os
 import traceback
 import logging
 
 import models
 import schemas
 from database import engine, get_db
+
+FE_DIST = os.path.realpath(
+    os.path.join(os.path.dirname(__file__), "..", "milan-fe", "dist")
+)
 
 logging.basicConfig(level=logging.ERROR, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
@@ -135,6 +140,52 @@ def get_stats(db: Session = Depends(get_db)):
     }
 
 
+@router.get("/api/summary")
+def get_summary(db: Session = Depends(get_db)):
+    # Sources — count normalized events grouped by source/device
+    rows = db.query(models.NormalizedEvent).all()
+    source_counts = {}
+    for ev in rows:
+        nj = ev.normalized_json or {}
+        source = nj.get('source') or ev.device or 'Unknown'
+        source_counts[source] = source_counts.get(source, 0) + 1
+
+    sources = [
+        {"label": label, "value": f"{count} event{'s' if count != 1 else ''}", "detail": f"Events attributed to {label} in the analyzed baseline."}
+        for label, count in sorted(source_counts.items(), key=lambda kv: -kv[1])
+    ] or [
+        {"label": "Identity", "value": "0 events", "detail": "No events in the analyzed baseline yet."}
+    ]
+
+    # Policy — derive from anomaly alerts
+    alerts = db.query(models.AnomalyAlert).all()
+    policy_violations = sum(1 for a in alerts if a.anomaly_reason and 'policy' in (a.anomaly_reason or '').lower())
+    privileged = sum(1 for a in alerts if a.anomaly_reason and ('priv' in (a.anomaly_reason or '').lower() or 'admin' in (a.anomaly_reason or '').lower()))
+    blocked = sum(1 for a in alerts if a.alert_status in ('REVIEWED', 'CLOSED'))
+
+    policy = [
+        {"label": "Policy Violations", "value": str(policy_violations), "detail": "Alerts referencing a policy or compliance breach."},
+        {"label": "Privileged Events", "value": str(privileged), "detail": "Privileged or admin activity flagged for review."},
+        {"label": "Blocked / Reviewed", "value": str(blocked), "detail": "Alerts that have been reviewed or closed."},
+    ]
+
+    # Reports — static summary cards (status reflects data presence)
+    has_data = len(rows) > 0
+    status = "Ready" if has_data else "Pending"
+    total_alerts = len(alerts)
+    reports = [
+        {"label": "Daily Risk Summary", "value": status, "detail": f"{total_alerts} anomaly alert{'s' if total_alerts != 1 else ''} across {len(rows)} sampled event{'s' if len(rows) != 1 else ''}."},
+        {"label": "Incident Summary", "value": status, "detail": "Highest-severity incidents from the analyzed baseline."},
+        {"label": "Trend Summary", "value": status, "detail": "Activity patterns inferred from the analyzed window."},
+    ]
+
+    return {
+        "sources": sources,
+        "reports": reports,
+        "policy": policy,
+    }
+
+
 @router.get("/api/audit")
 def get_audit_logs(db: Session = Depends(get_db)):
     audits = db.query(models.AuditLog).order_by(models.AuditLog.action_timestamp.desc()).all()
@@ -154,6 +205,38 @@ def get_audit_logs(db: Session = Depends(get_db)):
 
 app.include_router(router)
 
+
+# Serve the built FE SPA from the same process / port.
+@app.get("/")
+def root_redirect():
+    return RedirectResponse("/milan-aegis-fe/")
+
+
+@app.get("/milan-fe")
+@app.get("/milan-fe/{full_path:path}")
+def legacy_redirect(full_path: str = ""):
+    return RedirectResponse(f"/milan-aegis-fe/{full_path}")
+
+
+@app.get("/milan-aegis-fe")
+def fe_no_slash():
+    return RedirectResponse("/milan-aegis-fe/")
+
+
+@app.get("/milan-aegis-fe/{full_path:path}")
+def serve_spa(full_path: str = ""):
+    candidate = os.path.realpath(os.path.join(FE_DIST, full_path))
+    # Path-traversal guard + serve real file when present, else SPA fallback.
+    if (
+        full_path
+        and candidate.startswith(FE_DIST)
+        and os.path.isfile(candidate)
+    ):
+        return FileResponse(candidate)
+    return FileResponse(os.path.join(FE_DIST, "index.html"))
+
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=5000)
+    port = int(os.getenv("PORT", "5000"))
+    uvicorn.run(app, host="0.0.0.0", port=port)
