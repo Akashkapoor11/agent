@@ -22,7 +22,11 @@ function legacyBaseRedirect() {
 
 export default defineConfig({
   plugins: [react(), legacyBaseRedirect()],
-  base: process.env.BASE_PATH || "/milan-aegis-fe/",
+  // Default to root-relative asset URLs so the FE works out of the box on
+  // Render Static Sites (which serve dist/ at /). The Aegis K8s pipeline
+  // can override via BASE_PATH=/milan-aegis-fe/ when nginx mounts the SPA
+  // under that prefix.
+  base: process.env.BASE_PATH || "/",
   server: {
     port: 5175,
     strictPort: true,
