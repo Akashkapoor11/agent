@@ -11,9 +11,17 @@
 
 FROM postgres:16-alpine
 
-ENV POSTGRES_USER=milan \
-    POSTGRES_PASSWORD=isi4ja8# \
-    POSTGRES_DB=milan \
+# Postgres init credentials. Defaults are overridable at build or run
+# time via standard ARG/ENV mechanics. The bundled Postgres only listens
+# on 127.0.0.1 inside the container, so these are never exposed
+# externally — but operators can still override in production:
+#   docker build --build-arg POSTGRES_PASSWORD=$(openssl rand -hex 24) ...
+ARG POSTGRES_USER=milan
+ARG POSTGRES_PASSWORD=milan_dev_only
+ARG POSTGRES_DB=milan
+ENV POSTGRES_USER=$POSTGRES_USER \
+    POSTGRES_PASSWORD=$POSTGRES_PASSWORD \
+    POSTGRES_DB=$POSTGRES_DB \
     PGDATA=/var/lib/postgresql/data
 
 RUN apk add --no-cache python3 py3-pip build-base postgresql-dev

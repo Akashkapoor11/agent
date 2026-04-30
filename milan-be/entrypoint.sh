@@ -15,16 +15,19 @@ POSTGRES_PID=$!
 # initdb and the "ready to accept connections" log line.
 echo "[entrypoint] waiting for postgres..."
 for i in $(seq 1 60); do
-    if pg_isready -h 127.0.0.1 -U milan -d milan > /dev/null 2>&1; then
+    if pg_isready -h 127.0.0.1 -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" > /dev/null 2>&1; then
         echo "[entrypoint] postgres ready"
         break
     fi
     sleep 1
 done
 
-# Force DB_CON_STR to the bundled instance regardless of what the host
-# environment set. This makes the deploy resilient to operator typos.
-export DB_CON_STR="host=127.0.0.1 port=5432 dbname=milan user=milan password=isi4ja8#"
+# Force DB_CON_STR to point at the bundled Postgres instance, using
+# the same credentials the postgres base image was initialised with.
+# POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB are exported from the
+# Dockerfile (via ARG/ENV) so this works no matter how the operator
+# overrode them at build time.
+export DB_CON_STR="host=127.0.0.1 port=5432 dbname=${POSTGRES_DB} user=${POSTGRES_USER} password=${POSTGRES_PASSWORD}"
 
 # Forward signals so SIGTERM cleanly stops both processes.
 trap 'kill -TERM "$POSTGRES_PID" "$UVICORN_PID" 2>/dev/null; wait' TERM INT

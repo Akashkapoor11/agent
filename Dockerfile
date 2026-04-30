@@ -26,10 +26,14 @@ RUN npm run build
 # ---------- Stage 2: Postgres 16 + Python + bundled FE ----------
 FROM postgres:16-alpine
 
-# Postgres init env vars — read by the base image's docker-entrypoint.sh
-ENV POSTGRES_USER=milan \
-    POSTGRES_PASSWORD=isi4ja8# \
-    POSTGRES_DB=milan \
+# Postgres init credentials. Defaults are overridable at build time:
+#   docker build --build-arg POSTGRES_PASSWORD=$(openssl rand -hex 24) ...
+ARG POSTGRES_USER=milan
+ARG POSTGRES_PASSWORD=milan_dev_only
+ARG POSTGRES_DB=milan
+ENV POSTGRES_USER=$POSTGRES_USER \
+    POSTGRES_PASSWORD=$POSTGRES_PASSWORD \
+    POSTGRES_DB=$POSTGRES_DB \
     PGDATA=/var/lib/postgresql/data
 
 # Python + build deps for psycopg2
