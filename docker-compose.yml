@@ -1,30 +1,9 @@
 services:
 
-  db:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: milan
-    ports:
-      - "5433:5432"
-    volumes:
-      - ./milan-db/milan-ddl.sql:/docker-entrypoint-initdb.d/01-ddl.sql
-      - ./milan-db/milan-dml.sql:/docker-entrypoint-initdb.d/02-dml.sql
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d milan"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
   be:
     build: ./milan-be
     environment:
-      DB_CON_STR: postgresql+psycopg2://postgres:postgres@db:5432/milan
-    depends_on:
-      db:
-        condition: service_healthy
+      DB_CON_STR: "dbname=chitti_apps user=milan password=isi4ja8# host=dpg-d7oca858nd3s738qt6pg-a port=5432"
 
   fe:
     build:
@@ -36,6 +15,3 @@ services:
       - "5000:5000"
     depends_on:
       - be
-
-volumes:
-  pgdata:
