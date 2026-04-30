@@ -25,6 +25,23 @@ logger = logging.getLogger(__name__)
 app = FastAPI(title="AI Log Intelligence Backend")
 
 
+# Starlette's CORSMiddleware does not always wrap responses produced
+# by custom exception_handlers, so 500 responses can ship without
+# Access-Control-Allow-Origin and the browser then surfaces them as
+# CORS errors instead of the actual server error. Echo the request
+# Origin into the response when it's present so the browser can read
+# the body and report the real error.
+def _cors_headers(request: Request) -> dict:
+    origin = request.headers.get("origin")
+    if not origin:
+        return {}
+    return {
+        "Access-Control-Allow-Origin": origin,
+        "Access-Control-Allow-Credentials": "true",
+        "Vary": "Origin",
+    }
+
+
 @app.exception_handler(StarletteHTTPException)
 async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     return JSONResponse(
@@ -35,6 +52,7 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
             "message": str(exc.detail),
             "path": str(request.url),
         },
+        headers=_cors_headers(request),
     )
 
 
@@ -49,6 +67,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
             "details": exc.errors(),
             "path": str(request.url),
         },
+        headers=_cors_headers(request),
     )
 
 
@@ -65,6 +84,7 @@ async def generic_exception_handler(request: Request, exc: Exception):
             "traceback": tb,
             "path": str(request.url),
         },
+        headers=_cors_headers(request),
     )
 
 app.add_middleware(
