@@ -2,8 +2,26 @@
 // In dev, Vite proxies /milan-aegis/* to http://localhost:5000.
 // Backend exposes: /milan-aegis/api/{stats,alerts,summary,audit,logs/normalized}.
 // This module fans those out into the higher-level shapes the screens expect.
+//
+// Resolution order for the API base URL:
+//   1. VITE_API_URL build-time env var (lets the Aegis pipeline pin a specific BE).
+//   2. If served from agent-1-dley.onrender.com (the FE Static Site), call the
+//      paired backend at agent-2-tkwd.onrender.com directly. This avoids the
+//      need to configure Render rewrite rules in the Static Site dashboard.
+//   3. Otherwise fall back to the same-origin path '/milan-aegis/api', which
+//      works when the FE and BE are served by the same host (local dev with
+//      Vite's proxy, or unified Docker image where FastAPI serves both).
 
-const RAW_BASE = (import.meta.env.VITE_API_URL || "/milan-aegis/api").replace(/\/+$/, "");
+function resolveApiBase() {
+  const fromEnv = import.meta.env.VITE_API_URL;
+  if (fromEnv) return fromEnv;
+  if (typeof window !== "undefined" && window.location?.hostname === "agent-1-dley.onrender.com") {
+    return "https://agent-2-tkwd.onrender.com/milan-aegis/api";
+  }
+  return "/milan-aegis/api";
+}
+
+const RAW_BASE = resolveApiBase().replace(/\/+$/, "");
 
 async function request(path, opts = {}) {
   const res = await fetch(`${RAW_BASE}${path}`, {

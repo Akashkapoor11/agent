@@ -27,8 +27,10 @@ COPY requirements.txt .
 RUN pip3 install --break-system-packages --no-cache-dir -r requirements.txt
 COPY . /app/
 
-# Pre-built React FE — main.py serves it from /milan-fe/dist
-COPY static-fe /milan-fe/dist
+# Backend-only build: FE is hosted separately as a Render Static Site
+# (agent-1) or as a Kubernetes Service in the Aegis pipeline. main.py
+# detects the missing /milan-fe/dist and returns JSON health/404 for
+# all FE-style routes.
 
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
