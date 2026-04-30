@@ -1,9 +1,12 @@
-# Build:  docker build -t milan-aegis-fe \
-#             --build-arg VITE_API_URL=http://localhost:5000/Milan-aegis \
-#             --build-arg BASE_PATH=/Milan-aegis-fe/ .
-# Run:    docker run -d --name milan-aegis-fe -p 5000:5000 milan-aegis-fe
-#         (-p host:container is required; without it, localhost:5000 will not work.)
+# Self-contained FE image for the Aegis AKS pipeline. Build context is
+# milan-fe/. The Aegis pipeline only ships this folder; everything below
+# resolves to files inside milan-fe/.
 #
+# Build:  docker build -t milan-aegis-fe \
+#             --build-arg VITE_API_URL=/milan-aegis/api \
+#             --build-arg BASE_PATH=/milan-aegis-fe/ .
+# Run:    docker run -d --name milan-aegis-fe -p 5000:5000 milan-aegis-fe
+
 # --- Build: install deps and produce static dist/ ---
 FROM node:22-alpine AS builder
 WORKDIR /app
@@ -14,12 +17,15 @@ RUN npm install --no-audit --no-fund
 
 COPY . .
 
-# Vite inlines VITE_* at build time only
-ARG VITE_API_URL=http://localhost:5000/Milan-aegis
+# Vite inlines VITE_* at build time only. The default points at the
+# nginx proxy path (/milan-aegis/api/) which this same container also
+# serves and forwards to milan-be.
+ARG VITE_API_URL=/milan-aegis/api
 ENV VITE_API_URL=$VITE_API_URL
 
-# Path where the SPA is mounted (ingress prefix). Must match trailing slash form, e.g. /Milan-aegis-fe/
-ARG BASE_PATH=/Milan-aegis-fe/
+# Ingress prefix where the SPA is mounted. Must end with a trailing
+# slash. Lowercase to match BE routes and nginx proxy_pass.
+ARG BASE_PATH=/milan-aegis-fe/
 ENV BASE_PATH=$BASE_PATH
 
 RUN npm run build
