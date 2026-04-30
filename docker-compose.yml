@@ -1,19 +1,36 @@
 services:
 
+  # Local Postgres for development. Production deploys use whatever
+  # external Postgres URL is set via DB_CON_STR.
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: milan
+      POSTGRES_PASSWORD: milan_dev_only
+      POSTGRES_DB: milan
+    volumes:
+      - ./milan-be/sql/milan-ddl.sql:/docker-entrypoint-initdb.d/01-ddl.sql
+      - ./milan-be/sql/milan-dml.sql:/docker-entrypoint-initdb.d/02-dml.sql
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U milan -d milan"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   app:
-    # Build context is the repo root so the Dockerfile can copy from
-    # both milan-be/ and milan-fe/. The image bundles Postgres 16,
-    # FastAPI, and the built React FE in a single container.
     build:
       context: .
       dockerfile: Dockerfile
+    environment:
+      # Local-only DSN. In production, set DB_CON_STR to your hosted
+      # Postgres URL (Render env var, K8s ConfigMap/Secret, etc.).
+      DB_CON_STR: "host=db port=5432 dbname=milan user=milan password=milan_dev_only"
     ports:
       - "5000:5000"
-    volumes:
-      # Persist Postgres across local restarts. On Render's free tier
-      # this volume isn't mounted, so the bundled seed reloads each
-      # cold start (fine for a read-only demo).
-      - pgdata:/var/lib/postgresql/data
+    depends_on:
+      db:
+        condition: service_healthy
 
 volumes:
   pgdata:
