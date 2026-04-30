@@ -29,7 +29,7 @@ FROM postgres:16-alpine
 # Postgres init env vars — read by the base image's docker-entrypoint.sh
 ENV POSTGRES_USER=milan \
     POSTGRES_PASSWORD=isi4ja8# \
-    POSTGRES_DB=chitti_apps \
+    POSTGRES_DB=milan \
     PGDATA=/var/lib/postgresql/data
 
 # Python + build deps for psycopg2

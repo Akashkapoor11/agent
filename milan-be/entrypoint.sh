@@ -15,7 +15,7 @@ POSTGRES_PID=$!
 # initdb and the "ready to accept connections" log line.
 echo "[entrypoint] waiting for postgres..."
 for i in $(seq 1 60); do
-    if pg_isready -h 127.0.0.1 -U milan -d chitti_apps > /dev/null 2>&1; then
+    if pg_isready -h 127.0.0.1 -U milan -d milan > /dev/null 2>&1; then
         echo "[entrypoint] postgres ready"
         break
     fi
@@ -24,7 +24,7 @@ done
 
 # Force DB_CON_STR to the bundled instance regardless of what the host
 # environment set. This makes the deploy resilient to operator typos.
-export DB_CON_STR="host=127.0.0.1 port=5432 dbname=chitti_apps user=milan password=isi4ja8#"
+export DB_CON_STR="host=127.0.0.1 port=5432 dbname=milan user=milan password=isi4ja8#"
 
 # Forward signals so SIGTERM cleanly stops both processes.
 trap 'kill -TERM "$POSTGRES_PID" "$UVICORN_PID" 2>/dev/null; wait' TERM INT

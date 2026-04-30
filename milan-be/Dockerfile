@@ -1,22 +1,19 @@
 # Build context: milan-be/ (Render Root Directory = milan-be).
 #
-# Single self-contained image bundling Postgres 16 + FastAPI. The FE is
-# NOT bundled here because Docker cannot COPY from outside the build
-# context (milan-fe/ lives at the repo root, outside this directory).
+# Self-contained image: Postgres 16 + FastAPI + the pre-built React FE.
+# The FE is bundled here as static-fe/ (committed to the repo, regenerated
+# from milan-fe/ via `npm run build` before each release).
 #
-# Use this Dockerfile when you want a BE-only deploy on Render's
-# existing Web Service that has Root Directory = milan-be. Pair it with
-# a separate Static Site for the FE.
-#
-# For the all-in-one deploy (FE + BE + DB in one container), use
-# /Dockerfile at the repo root with Root Directory left blank, or use
-# the render.yaml Blueprint at New + → Blueprint.
+# After deploy, the public URL serves both:
+#   /milan-aegis-fe/   → React frontend
+#   /milan-aegis/api/* → FastAPI backend
+#   /                  → 302 → /milan-aegis-fe/
 
 FROM postgres:16-alpine
 
 ENV POSTGRES_USER=milan \
     POSTGRES_PASSWORD=isi4ja8# \
-    POSTGRES_DB=chitti_apps \
+    POSTGRES_DB=milan \
     PGDATA=/var/lib/postgresql/data
 
 RUN apk add --no-cache python3 py3-pip build-base postgresql-dev
@@ -29,6 +26,9 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip3 install --break-system-packages --no-cache-dir -r requirements.txt
 COPY . /app/
+
+# Pre-built React FE — main.py serves it from /milan-fe/dist
+COPY static-fe /milan-fe/dist
 
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh

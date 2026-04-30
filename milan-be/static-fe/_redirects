@@ -1,0 +1,13 @@
+# Render Static Site rewrite rules.
+#
+# 1) Proxy API calls to the milan-be Render Web Service. Without this,
+#    fetch("/milan-aegis/api/...") would hit the Static Site host and 404.
+#    Status 200 makes this a rewrite (server-side proxy), not a redirect.
+#
+# 2) SPA fallback: every other path serves index.html so React Router can
+#    handle client-side routing (/dashboard, /alerts, /summary, /audit).
+#
+# Order matters — the API rule must come before the catch-all.
+
+/milan-aegis/api/*  https://agent-2-tkwd.onrender.com/milan-aegis/api/:splat  200
+/*                  /index.html                                                200
