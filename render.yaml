@@ -1,22 +1,29 @@
-# Render Blueprint — one-click deploy.
+# Render Blueprint — one-click backend deploy.
 #
-# Anyone with a Render account can point New + → Blueprint at this
-# repository and Render will provision the entire stack (frontend +
-# backend + database) as a single Docker Web Service. No dashboard
-# config, no env vars, no separate database, no rewrite rules.
+# Provisions the FastAPI backend Web Service. The frontend is hosted
+# separately (Render Static Site / Aegis K8s service / etc.) and the
+# database is whatever PostgreSQL the operator points DB_CON_STR at
+# (Aiven, Render Postgres, Supabase, Neon, self-hosted, etc.).
 #
-# After Apply, Render gives a public URL like https://milan-aegis-XXXX.onrender.com.
-# Open that URL in a browser → full Milan Aegis dashboard with real data.
+# When applying this blueprint, Render will prompt for the value of
+# DB_CON_STR (sync: false). Paste your hosted PostgreSQL connection URL
+# (form: postgresql://user:pass@host:port/dbname?sslmode=require) and
+# the service comes online once the schema/seed have been applied to
+# that database (run milan-be/bootstrap_db.py once against it).
 
 services:
   - type: web
-    name: milan-aegis
+    name: milan-aegis-be
     runtime: docker
     region: oregon
     plan: free
-    # Dockerfile lives at repo root so the build context is the repo root
-    # by default, letting it COPY from both milan-be/ and milan-fe/.
     dockerfilePath: ./Dockerfile
     dockerContext: .
     healthCheckPath: /
     autoDeploy: true
+    envVars:
+      # Operator-provided. Render prompts for this on Blueprint apply
+      # because sync: false; the value is then stored on the service
+      # and never written back to the repo.
+      - key: DB_CON_STR
+        sync: false
