@@ -6,7 +6,7 @@ services:
     # FastAPI, and the built React FE in a single container.
     build:
       context: .
-      dockerfile: milan-be/Dockerfile
+      dockerfile: Dockerfile
     ports:
       - "5000:5000"
     volumes:

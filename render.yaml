@@ -14,8 +14,9 @@ services:
     runtime: docker
     region: oregon
     plan: free
-    dockerfilePath: ./milan-be/Dockerfile
-    # Build context = repo root (so the Dockerfile can copy from both
-    # milan-be/ and milan-fe/). Leaving rootDir unset keeps it at root.
+    # Dockerfile lives at repo root so the build context is the repo root
+    # by default, letting it COPY from both milan-be/ and milan-fe/.
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
     healthCheckPath: /
     autoDeploy: true
