@@ -1,35 +1,19 @@
 services:
 
-  db:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_USER: milan
-      POSTGRES_PASSWORD: isi4ja8#
-      POSTGRES_DB: chitti_apps
-    volumes:
-      - ./milan-db/milan-ddl.sql:/docker-entrypoint-initdb.d/01-ddl.sql
-      - ./milan-db/milan-dml.sql:/docker-entrypoint-initdb.d/02-dml.sql
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U milan -d chitti_apps"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
   app:
+    # Self-contained image bundling Postgres 16 + FastAPI. Build context
+    # is milan-be/ so the same image works on Render with
+    # Root Directory = milan-be.
     build:
-      context: .
-      dockerfile: milan-be/Dockerfile
-      args:
-        VITE_API_URL: /milan-aegis/api
-        BASE_PATH: /milan-aegis-fe/
-    environment:
-      DB_CON_STR: "dbname=chitti_apps user=milan password=isi4ja8# host=db port=5432"
+      context: ./milan-be
+      dockerfile: Dockerfile
     ports:
       - "5000:5000"
-    depends_on:
-      db:
-        condition: service_healthy
+    volumes:
+      # Persist Postgres data across local restarts. On Render's free
+      # tier this volume isn't mounted, so the bundled seed reloads on
+      # every cold start (which is fine for a read-only demo).
+      - pgdata:/var/lib/postgresql/data
 
 volumes:
   pgdata:
