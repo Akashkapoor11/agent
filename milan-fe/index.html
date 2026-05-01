@@ -11,8 +11,13 @@
       rel="stylesheet"
     />
     <!-- Runtime config: sets window.MILAN_API_BASE used by src/api.js.
-         Loaded before the bundle so the API base is ready synchronously. -->
-    <script src="./config.js"></script>
+         Loaded before the bundle so the API base is ready synchronously.
+         %BASE_URL% is substituted by Vite at build time with the
+         configured base ('/' on Render Static Site, '/milan-aegis-fe/'
+         on the K8s build) producing an ABSOLUTE path so deep-link
+         navigation like /dashboard does not resolve config.js relative
+         to the current route. -->
+    <script src="%BASE_URL%config.js"></script>
   </head>
   <body>
     <div id="root"></div>
