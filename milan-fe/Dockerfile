@@ -32,7 +32,13 @@ RUN npm run build
 
 # --- Run: static files only (small image, no Node in production) ---
 FROM nginx:1.27-alpine AS runner
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# default.conf.template uses ${MILAN_BE_UPSTREAM} which the nginx alpine
+# base image substitutes at startup via 20-envsubst-on-templates.sh.
+# Override the env var per-environment to point nginx at the BE.
+ENV MILAN_BE_UPSTREAM=milan-be:5000
+
+COPY default.conf.template /etc/nginx/templates/default.conf.template
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 EXPOSE 5000

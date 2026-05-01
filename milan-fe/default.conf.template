@@ -8,15 +8,17 @@ server {
     gzip_types text/plain text/css application/json application/javascript text/xml application/xml image/svg+xml;
 
     # ─── Backend API: proxy /milan-aegis/api/* to the backend container ────────
-    # Use a runtime DNS resolver and a variable in proxy_pass so nginx does NOT
-    # resolve the upstream hostname at startup. The Aegis AKS pipeline deploys
-    # milan-fe and milan-be to separate namespaces, so the hostname must be the
-    # cross-namespace FQDN <service>.<namespace>.svc.cluster.local. If the BE
-    # service is not yet ready when the FE pod boots, nginx will not crash; it
-    # will resolve on each request.
+    # The upstream hostname is templated at container start. The nginx
+    # base image runs /docker-entrypoint.d/20-envsubst-on-templates.sh
+    # against /etc/nginx/templates/*.template, so ${MILAN_BE_UPSTREAM}
+    # is replaced by whatever the Deployment / docker-compose / OS env
+    # provides. Examples:
+    #   milan-be:5000                                  (same K8s namespace)
+    #   milan-be.milan-be.svc.cluster.local:5000       (cross namespace, Aegis)
+    #   host.docker.internal:5000                      (docker-compose alt)
     location ^~ /milan-aegis/api/ {
-        resolver kube-dns.kube-system.svc.cluster.local valid=10s ipv6=off;
-        set $milan_be_upstream "milan-be.milan-be.svc.cluster.local:5000";
+        resolver kube-dns.kube-system.svc.cluster.local 8.8.8.8 valid=10s ipv6=off;
+        set $milan_be_upstream "${MILAN_BE_UPSTREAM}";
         proxy_pass http://$milan_be_upstream;
         proxy_http_version 1.1;
         proxy_set_header Host $host;

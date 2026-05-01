@@ -1,0 +1,121 @@
+# Local Kubernetes manifests for Milan Aegis on Docker Desktop.
+# Apply with: kubectl apply -f k8s/milan-aegis.yaml
+#
+# - milan-be: FastAPI backend talking to Aiven Postgres via DB_CON_STR
+#   (loaded from Secret 'milan-be-secrets').
+# - milan-fe: nginx serving the React SPA, proxying /milan-aegis/api/*
+#   to the milan-be Service via ClusterIP DNS.
+# - All in the 'default' namespace; same-namespace short hostnames work.
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: milan
+---
+# NOTE: do NOT commit a real DB_CON_STR into this manifest. Create the
+# secret out-of-band before applying this file:
+#
+#   kubectl create namespace milan
+#   kubectl -n milan create secret generic milan-be-secrets \
+#     --from-literal=DB_CON_STR='postgresql://USER:PASS@HOST:PORT/DBNAME?sslmode=require'
+#
+# Then apply this file (the namespace block below becomes a no-op since
+# 'milan' already exists). The Deployment loads DB_CON_STR via envFrom
+# secretRef so rotating the password is just a 'kubectl create secret
+# ... --dry-run=client -o yaml | kubectl apply -f -' away.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: milan-be
+  namespace: milan
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: milan-be
+  template:
+    metadata:
+      labels:
+        app: milan-be
+    spec:
+      containers:
+        - name: milan-be
+          image: milan-be:local
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 5000
+          envFrom:
+            - secretRef:
+                name: milan-be-secrets
+          readinessProbe:
+            httpGet:
+              path: /milan-aegis/api/stats
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: milan-be
+  namespace: milan
+spec:
+  selector:
+    app: milan-be
+  ports:
+    - name: http
+      port: 5000
+      targetPort: 5000
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: milan-fe
+  namespace: milan
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: milan-fe
+  template:
+    metadata:
+      labels:
+        app: milan-fe
+    spec:
+      containers:
+        - name: milan-fe
+          image: milan-fe:local
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 5000
+          env:
+            # Cluster-FQDN form so nginx's runtime resolver (kube-dns)
+            # finds the milan-be Service regardless of the FE pod's
+            # search-path config.
+            - name: MILAN_BE_UPSTREAM
+              value: "milan-be.milan.svc.cluster.local:5000"
+          resources:
+            limits:
+              memory: "128Mi"
+              cpu: "100m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: milan-fe
+  namespace: milan
+spec:
+  selector:
+    app: milan-fe
+  ports:
+    - name: http
+      port: 80
+      targetPort: 5000
+      nodePort: 30080
+  type: LoadBalancer
